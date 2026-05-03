@@ -188,16 +188,16 @@
     .slots-list li { border-bottom: 1px solid #eee; }
     .slots-list li:last-child { border-bottom: 0; }
     .slot-avail {
-      display: flex; align-items: center; width: 100%;
+      display: flex; align-items: center; justify-content: space-between; width: 100%;
       padding: var(--spacing-lg); background: #1b5e20; color: #fff;
-      text-decoration: none; font-size: 14px; font-weight: 600;
-      min-height: 48px;
+      text-decoration: none; font-size: 15px; font-weight: 600;
+      min-height: 52px;
     }
-    .slot-avail::before { content: "✓ "; margin-right: var(--spacing-sm); }
-    .slot-booked {
-      display: flex; align-items: center; width: 100%;
-      padding: var(--spacing-lg); background: #f5f5f5; color: #999;
-      font-size: 14px; font-weight: 600; min-height: 48px;
+    .slot-avail::before { content: "✓ "; margin-right: var(--spacing-sm); flex-shrink: 0; }
+    .slot-avail-time { flex: 1; }
+    .slot-avail-court {
+      font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 500;
+      text-align: right; margin-left: var(--spacing-sm);
     }
     .slots-empty { padding: var(--spacing-lg); color: #999; font-size: 13px; }
   }
@@ -253,30 +253,35 @@
   </table>
 </div>
 
-<!-- Mobile card view (one card per individual court) -->
+<!-- Mobile card view (one card per venue) -->
 <div class="mobile-cards">
-  {% for row in rows %}
+  {% for venue in venue_rows %}
   <div class="court-card">
     <div class="court-header">
-      <div class="court-name">{{ row.court }}</div>
-      {% if row.surface %}<div class="court-meta">{{ row.surface }}</div>{% endif %}
-      <span class="court-source">{{ row.platform }}</span>
-      {% if row.error %}<div class="slot-error">{{ row.error }}</div>{% endif %}
+      <div class="court-name">{{ venue.name }}</div>
+      {% if venue.surface %}<div class="court-meta">{{ venue.surface }}</div>{% endif %}
+      <span class="court-source">{{ venue.platform }}</span>
+      {% if venue.error %}<div class="slot-error">{{ venue.error }}</div>{% endif %}
     </div>
-    {% if not row.error %}
+    {% if not venue.error %}
     <ul class="slots-list">
       {% set has_any = namespace(v=false) %}
       {% for col in time_cols %}
-        {% if col.slot in row.slot_map %}{% set has_any.v = true %}{% endif %}
+        {% if col.slot in venue.slots %}{% set has_any.v = true %}{% endif %}
       {% endfor %}
       {% if has_any.v %}
         {% for col in time_cols %}
-          {% if col.slot in row.slot_map %}
-          <li><a class="slot-avail" href="{{ row.slot_map[col.slot] }}" target="_blank">{{ col.label }}</a></li>
+          {% if col.slot in venue.slots %}
+            {% for court in venue.slots[col.slot] %}
+            <li><a class="slot-avail" href="{{ court.url }}" target="_blank">
+              <span class="slot-avail-time">{{ col.label }}</span>
+              <span class="slot-avail-court">{{ court.label }}</span>
+            </a></li>
+            {% endfor %}
           {% endif %}
         {% endfor %}
       {% else %}
-        <li class="slots-empty">No availability</li>
+        <li class="slots-empty">No availability today</li>
       {% endif %}
     </ul>
     {% endif %}
