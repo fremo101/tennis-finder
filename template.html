@@ -369,11 +369,13 @@
     }
 
     function position(e) {
+      const cx = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : window.innerWidth / 2);
+      const cy = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : window.innerHeight / 2);
       const tw = tooltip.offsetWidth || 180;
       const th = tooltip.offsetHeight || 60;
-      let x = e.clientX + 14;
-      let y = e.clientY - 10;
-      if (x + tw > window.innerWidth - 8) x = e.clientX - tw - 14;
+      let x = cx + 14;
+      let y = cy - 10;
+      if (x + tw > window.innerWidth - 8) x = cx - tw - 14;
       if (y + th > window.innerHeight - 8) y = window.innerHeight - th - 8;
       tooltip.style.left = x + 'px';
       tooltip.style.top = y + 'px';
@@ -407,6 +409,17 @@
           tooltip.classList.add('pinned');
         }
       });
+      cell.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const courts = JSON.parse(cell.dataset.courts);
+        if (courts.length === 1) {
+          window.open(courts[0].url, '_blank');
+        } else {
+          clearTimeout(hideTimer);
+          show(cell, e);
+          tooltip.classList.add('pinned');
+        }
+      }, { passive: false });
     });
 
     tooltip.addEventListener('mouseenter', () => {
