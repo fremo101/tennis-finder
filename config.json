@@ -1,0 +1,55 @@
+[
+  {
+    "name": "Lyne Park TC",
+    "platform": "intrac_new",
+    "intrac_base_url": "https://lptc.intrac.com.au",
+    "intrac_location_id": 8,
+    "booking_url": "https://lptc.intrac.com.au/dashboard?page=space",
+    "surface": "Hard",
+    "courts": 6
+  },
+  {
+    "name": "Wentworth Tennis",
+    "platform": "intrac_old",
+    "intrac_base_url": "https://wentworthtennis.intrac.com.au/tennis",
+    "intrac_location_id": 80,
+    "booking_url": "https://wentworthtennis.intrac.com.au/tennis/reserve.cfm?location=80&date={date}&start={start}&court={court}",
+    "surface": "Hard",
+    "courts": 6
+  },
+  {
+    "name": "White City Tennis",
+    "platform": "sportsguru",
+    "sportsguru_url": "https://whitecity.intennis.com.au/secure/customer/booking/v2/public/venue/1",
+    "booking_url": "https://whitecity.intennis.com.au/secure/customer/booking/v2/public/venue/1",
+    "surface": "Hard",
+    "courts": 6
+  },
+  {
+    "name": "Parklands (Centennial)",
+    "platform": "intrac_old",
+    "intrac_base_url": "https://parklands.intrac.com.au/sports",
+    "intrac_location_id": 55,
+    "booking_url": "https://parklands.intrac.com.au/sports/book.cfm?location=55&date={date}&start={start}&court={court}",
+    "surface": "Clay",
+    "courts": 9
+  },
+  {
+    "name": "Snape Park TC",
+    "platform": "tennisvenues",
+    "tennisvenues_slug": "snape-park-tc",
+    "tennisvenues_venue_id": "1",
+    "booking_url": "https://www.tennisvenues.com.au/booking/request?v=snape-park-tc&id={court}&d={date_compact}&t={time_hhmm}&cm=false",
+    "surface": "Hard",
+    "courts": 4
+  },
+  {
+    "name": "Bondi Beach Tennis",
+    "platform": "tennisvenues",
+    "tennisvenues_slug": "bondi-tc",
+    "tennisvenues_venue_id": "1",
+    "booking_url": "https://www.tennisvenues.com.au/booking/request?v=bondi-tc&id={court}&d={date_compact}&t={time_hhmm}&cm=false",
+    "surface": "Hard",
+    "courts": 4
+  }
+]

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eastern Suburbs Tennis Courts</title>
+<style>
+  :root {
+    --accent: #D4843C;
+    --accent-light: #E8B699;
+    --green: #2e7d32;
+    --green-light: #4caf50;
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --border: #e8e8e5;
+    --text: #111111;
+    --muted: #888888;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.07);
+    padding: 40px 48px;
+    width: 100%;
+    max-width: 460px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .logo {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* Calendar */
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .cal-month {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .nav-btn {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s, border-color 0.12s;
+  }
+
+  .nav-btn:hover { background: var(--bg); border-color: #ccc; }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .day-label {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding-bottom: 6px;
+  }
+
+  .day {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.1s, color 0.1s;
+    position: relative;
+  }
+
+  .day:hover:not(:disabled):not(.empty) {
+    background: #f0f0ed;
+  }
+
+  .day.today {
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .day.today::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%; transform: translateX(-50%);
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .day.selected {
+    background: var(--accent) !important;
+    color: #fff !important;
+    font-weight: 700;
+  }
+
+  .day.selected::after { display: none; }
+
+  .day:disabled, .day.past {
+    color: #ccc;
+    cursor: default;
+  }
+
+  .day.empty {
+    cursor: default;
+  }
+
+  .day.far-future {
+    color: #bbb;
+  }
+
+  /* CTA */
+  .cta-area {
+    margin-top: 24px;
+  }
+
+  .cta-btn {
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.12s, transform 0.08s;
+    letter-spacing: -0.2px;
+  }
+
+  .cta-btn:hover:not(:disabled) { background: #1b5e20; }
+  .cta-btn:active:not(:disabled) { transform: scale(0.98); }
+
+  .cta-btn:disabled {
+    background: #ccc;
+    cursor: default;
+  }
+
+  .selected-label {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    min-height: 18px;
+  }
+
+  /* Loading overlay */
+  #loading-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 9999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    gap: 16px;
+    font-size: 17px;
+    font-weight: 500;
+  }
+
+  .spinner {
+    width: 40px; height: 40px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 520px) {
+    .card { padding: 28px 20px; }
+    h1 { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <header>
+    <div class="logo">🎾</div>
+    <h1>Eastern Suburbs Tennis Courts</h1>
+    <p class="subtitle">Pick a date to check court availability</p>
+  </header>
+
+  <div class="cal-nav">
+    <button class="nav-btn" id="prev-btn" aria-label="Previous month">&#8249;</button>
+    <span class="cal-month" id="cal-month-label"></span>
+    <button class="nav-btn" id="next-btn" aria-label="Next month">&#8250;</button>
+  </div>
+
+  <div class="cal-grid" id="cal-grid">
+    <div class="day-label">Su</div>
+    <div class="day-label">Mo</div>
+    <div class="day-label">Tu</div>
+    <div class="day-label">We</div>
+    <div class="day-label">Th</div>
+    <div class="day-label">Fr</div>
+    <div class="day-label">Sa</div>
+  </div>
+
+  <div class="cta-area">
+    <div class="selected-label" id="selected-label"></div>
+    <button class="cta-btn" id="cta-btn" disabled>Select a date</button>
+  </div>
+</div>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div>Fetching court availability…</div>
+</div>
+
+<script>
+(function() {
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  let viewYear = today.getFullYear();
+  let viewMonth = today.getMonth();
+  let selectedDate = null; // Date object
+
+  function pad(n) { return String(n).padStart(2,'0'); }
+  function toISO(d) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+  function formatDisplay(d) {
+    return `${DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function render() {
+    const label = document.getElementById('cal-month-label');
+    label.textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+
+    // Remove old day buttons (keep the 7 day-label divs)
+    const grid = document.getElementById('cal-grid');
+    const oldDays = grid.querySelectorAll('.day, .day-empty');
+    oldDays.forEach(d => d.remove());
+
+    const firstDay = new Date(viewYear, viewMonth, 1).getDay(); // 0=Sun
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const maxBookAhead = new Date(today);
+    maxBookAhead.setDate(today.getDate() + 30); // only allow 30 days ahead
+
+    // Empty cells before first day
+    for (let i = 0; i < firstDay; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'day empty';
+      grid.appendChild(empty);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(viewYear, viewMonth, d);
+      const btn = document.createElement('button');
+      btn.className = 'day';
+      btn.textContent = d;
+
+      const isPast = date < today;
+      const isFarFuture = date > maxBookAhead;
+
+      if (isPast) {
+        btn.classList.add('past');
+        btn.disabled = true;
+      } else if (isFarFuture) {
+        btn.classList.add('far-future');
+        btn.disabled = true;
+      } else {
+        btn.addEventListener('click', () => selectDate(date));
+      }
+
+      if (date.toDateString() === today.toDateString()) {
+        btn.classList.add('today');
+      }
+
+      if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
+        btn.classList.add('selected');
+      }
+
+      grid.appendChild(btn);
+    }
+
+    // Nav button states
+    const prevMonth = new Date(viewYear, viewMonth - 1, 1);
+    document.getElementById('prev-btn').disabled =
+      prevMonth < new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const nextMonth = new Date(viewYear, viewMonth + 1, 1);
+    document.getElementById('next-btn').disabled = nextMonth > maxBookAhead;
+  }
+
+  function selectDate(date) {
+    selectedDate = date;
+    const lbl = document.getElementById('selected-label');
+    lbl.textContent = formatDisplay(date);
+    const btn = document.getElementById('cta-btn');
+    btn.disabled = false;
+    btn.textContent = 'Check availability →';
+    render();
+  }
+
+  document.getElementById('prev-btn').addEventListener('click', () => {
+    viewMonth--;
+    if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    render();
+  });
+
+  document.getElementById('next-btn').addEventListener('click', () => {
+    viewMonth++;
+    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    render();
+  });
+
+  document.getElementById('cta-btn').addEventListener('click', () => {
+    if (!selectedDate) return;
+    document.getElementById('loading-overlay').style.display = 'flex';
+    window.location.href = '/?date=' + toISO(selectedDate);
+  });
+
+  render();
+
+  // Auto-select today if it's not in the past
+  selectDate(today);
+})();
+</script>
+
+</body>
+</html>

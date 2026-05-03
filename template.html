@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Eastern Suburbs Tennis – {{ date_display }}</title>
+<style>
+  :root {
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+    --spacing-2xl: 32px;
+    --spacing-3xl: 48px;
+    --color-accent: #D4843C;
+    --color-accent-light: #E8B699;
+    --color-avail: #2e7d32;
+    --color-avail-hover: #1b5e20;
+    --color-booked: #ebebeb;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #fafafa;
+    color: #111;
+    padding: var(--spacing-2xl);
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 24px; font-weight: 700; margin-bottom: var(--spacing-md);
+    border-bottom: 3px solid var(--color-accent); padding-bottom: var(--spacing-lg);
+    letter-spacing: -0.5px;
+  }
+  h1::before { content: "🎾 "; margin-right: 8px; }
+  .meta {
+    font-size: 12px; color: #888; margin-bottom: var(--spacing-lg);
+    font-weight: 500;
+  }
+  .summary-bar {
+    font-size: 12px; color: #666; margin-bottom: var(--spacing-xl);
+    background: rgba(212, 132, 60, 0.04);
+    padding: var(--spacing-lg);
+    border-radius: 6px;
+  }
+  .summary-bar strong { color: #111; }
+
+  /* ── Availability grid (desktop) ── */
+  .avail-wrap { overflow-x: auto; margin-bottom: var(--spacing-3xl); }
+
+  .avail-grid { border-collapse: collapse; width: max-content; }
+
+  .avail-grid thead th {
+    background: #111; color: #fff;
+    font-weight: 600; white-space: nowrap;
+    border-right: 1px solid #2a2a2a;
+  }
+  .avail-grid thead th.venue-header {
+    position: sticky; left: 0; z-index: 3;
+    min-width: 190px; text-align: left;
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 11px;
+  }
+  .avail-grid thead th.time-header {
+    width: 34px; min-width: 34px;
+    padding: 0;
+    vertical-align: bottom;
+  }
+  .avail-grid thead th.time-header span {
+    display: block;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    padding: var(--spacing-sm) 0 var(--spacing-xs);
+    font-size: 9px;
+    font-weight: 500;
+    text-align: left;
+    color: #ddd;
+  }
+  /* Slightly emphasise on-the-hour labels */
+  .avail-grid thead th.time-header.on-hour span {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .avail-grid tbody tr { height: 44px; }
+  .avail-grid tbody tr:nth-child(even) .venue-cell { background: #f5f5f5; }
+
+  .avail-grid tbody td.venue-cell {
+    position: sticky; left: 0; z-index: 1;
+    background: #fff;
+    border-right: 2px solid #ccc;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0 var(--spacing-md);
+    min-width: 190px;
+  }
+  .avail-grid tbody tr:nth-child(even) td.venue-cell { background: #f5f5f5; }
+
+  .venue-cell-name { font-size: 13px; font-weight: 700; }
+  .venue-cell-meta { font-size: 10px; color: #888; margin-top: 1px; }
+
+  .avail-grid tbody td.slot-cell {
+    width: 34px; min-width: 34px; height: 44px;
+    padding: 0;
+    border: 1px solid #e4e4e4;
+    border-right-color: #d0d0d0;
+    background: var(--color-booked);
+    position: relative;
+  }
+  /* Hour boundary lines */
+  .avail-grid tbody td.slot-cell.on-hour { border-left-color: #bbb; }
+
+  .avail-grid tbody td.slot-cell.has-courts {
+    background: var(--color-avail);
+    cursor: pointer;
+  }
+  .avail-grid tbody td.slot-cell.has-courts:hover {
+    background: var(--color-avail-hover);
+  }
+
+  /* ── Tooltip ── */
+  .court-tooltip {
+    display: none;
+    position: fixed;
+    background: #1a1a1a;
+    color: #fff;
+    border-radius: 8px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 12px;
+    z-index: 9999;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    min-width: 140px;
+    max-width: 240px;
+    pointer-events: none;
+  }
+  .court-tooltip.pinned { pointer-events: auto; }
+  .tt-time {
+    font-size: 10px; font-weight: 700; color: #888;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: var(--spacing-sm);
+  }
+  .tt-court {
+    display: block; color: #7ec87e;
+    text-decoration: none; font-weight: 600;
+    padding: 2px 0; line-height: 1.5;
+    white-space: nowrap;
+  }
+  .tt-court:hover { color: #a8dda8; text-decoration: underline; }
+
+  /* Legend */
+  .legend {
+    display: flex; gap: var(--spacing-xl); margin-top: var(--spacing-2xl);
+    font-size: 12px; color: #666;
+    flex-wrap: wrap;
+    padding-top: var(--spacing-xl);
+    border-top: 1px solid #eee;
+  }
+  .legend-item { display: flex; align-items: center; gap: var(--spacing-sm); }
+
+  /* ── Mobile card view ── */
+  .mobile-cards { display: none; }
+
+  @media (max-width: 767px) {
+    body { padding: var(--spacing-lg); }
+    h1 { font-size: 20px; }
+    .avail-wrap { display: none; }
+    .mobile-cards { display: block; }
+
+    .court-card {
+      background: #fff; border: 1px solid #ddd; border-radius: 6px;
+      margin-bottom: var(--spacing-lg); overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .court-header {
+      background: #f5f5f5; padding: var(--spacing-lg);
+      border-bottom: 1px solid #ddd;
+    }
+    .court-name { font-size: 14px; font-weight: 700; }
+    .court-meta { font-size: 11px; color: #888; margin-top: var(--spacing-xs); }
+    .court-source {
+      display: inline-block; font-size: 10px;
+      background: var(--color-accent-light); border: 1px solid var(--color-accent);
+      padding: var(--spacing-xs) var(--spacing-sm); border-radius: 4px;
+      color: #5a3a2a; margin-top: var(--spacing-sm); font-weight: 600;
+    }
+    .slot-error { color: #c00; font-size: 10px; font-style: italic; display: block; margin-top: var(--spacing-md); }
+    .slots-list { list-style: none; }
+    .slots-list li { border-bottom: 1px solid #eee; }
+    .slots-list li:last-child { border-bottom: 0; }
+    .slot-avail {
+      display: flex; align-items: center; width: 100%;
+      padding: var(--spacing-lg); background: #1b5e20; color: #fff;
+      text-decoration: none; font-size: 14px; font-weight: 600;
+      min-height: 48px;
+    }
+    .slot-avail::before { content: "✓ "; margin-right: var(--spacing-sm); }
+    .slot-booked {
+      display: flex; align-items: center; width: 100%;
+      padding: var(--spacing-lg); background: #f5f5f5; color: #999;
+      font-size: 14px; font-weight: 600; min-height: 48px;
+    }
+    .slots-empty { padding: var(--spacing-lg); color: #999; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 12px; flex-wrap: wrap;">
+  <h1 style="margin-bottom: 0;">Eastern Suburbs Tennis Courts</h1>
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <label for="date-picker" style="font-size: 14px; color: #666; font-weight: 500;">Jump to date:</label>
+    <input type="date" id="date-picker" value="{{ date_str }}" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+  </div>
+</div>
+<p class="meta">Updated <span id="updated-time" data-time="{{ generated_iso }}">just now</span> &nbsp;·&nbsp; {{ date_display }}</p>
+
+<div class="summary-bar">
+  <strong>{{ total_slots }}</strong> available hour{{ 's' if total_slots != 1 else '' }}
+  across {{ venue_count }} venues &nbsp;·&nbsp;
+  <strong>Hover any green cell to see available courts &amp; book</strong>
+  {% if errors %}&nbsp;·&nbsp; <span style="color:#c00">{{ errors }} venue{{ 's' if errors != 1 else '' }} had errors</span>{% endif %}
+</div>
+
+<!-- Desktop availability grid -->
+<div class="avail-wrap">
+  <table class="avail-grid">
+    <thead>
+      <tr>
+        <th class="venue-header">Venue</th>
+        {% for col in time_cols %}
+        <th class="time-header{% if col.slot.endswith(':00') %} on-hour{% endif %}">
+          <span>{{ col.label }}</span>
+        </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for venue in venue_rows %}
+      <tr>
+        <td class="venue-cell">
+          <div class="venue-cell-name">{{ venue.name }}</div>
+          {% if venue.surface %}<div class="venue-cell-meta">{{ venue.surface }}{% if venue.error %} · <span style="color:#c00">error</span>{% endif %}</div>{% elif venue.error %}<div class="venue-cell-meta" style="color:#c00">error fetching data</div>{% endif %}
+        </td>
+        {% for col in time_cols %}
+        {% set courts = venue.slots.get(col.slot, []) %}
+        <td class="slot-cell{% if courts %} has-courts{% endif %}{% if col.slot.endswith(':00') %} on-hour{% endif %}"
+            {% if courts %}data-courts="{{ courts | tojson | forceescape }}" data-time="{{ col.label }}"{% endif %}>
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Mobile card view (one card per individual court) -->
+<div class="mobile-cards">
+  {% for row in rows %}
+  <div class="court-card">
+    <div class="court-header">
+      <div class="court-name">{{ row.court }}</div>
+      {% if row.surface %}<div class="court-meta">{{ row.surface }}</div>{% endif %}
+      <span class="court-source">{{ row.platform }}</span>
+      {% if row.error %}<div class="slot-error">{{ row.error }}</div>{% endif %}
+    </div>
+    {% if not row.error %}
+    <ul class="slots-list">
+      {% set has_any = namespace(v=false) %}
+      {% for col in time_cols %}
+        {% if col.slot in row.slot_map %}{% set has_any.v = true %}{% endif %}
+      {% endfor %}
+      {% if has_any.v %}
+        {% for col in time_cols %}
+          {% if col.slot in row.slot_map %}
+          <li><a class="slot-avail" href="{{ row.slot_map[col.slot] }}" target="_blank">{{ col.label }}</a></li>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <li class="slots-empty">No availability</li>
+      {% endif %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="legend">
+  <span class="legend-item">
+    <span style="width:20px;height:20px;background:var(--color-avail);border-radius:3px;display:inline-block;"></span>
+    Available (hover to see courts &amp; book)
+  </span>
+  <span class="legend-item">
+    <span style="width:20px;height:20px;background:var(--color-booked);border-radius:3px;border:1px solid #ddd;display:inline-block;"></span>
+    Fully booked
+  </span>
+  <span class="legend-item" style="font-size:11px;color:#888;">
+    Darker left border = start of hour
+  </span>
+</div>
+
+<!-- Tooltip element -->
+<div class="court-tooltip" id="court-tooltip"></div>
+
+<!-- Loading overlay -->
+<div id="loading-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 99999; align-items: center; justify-content: center; flex-direction: column; color: #fff; font-size: 18px; gap: 16px; font-weight: 500;">
+  <div style="width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+  <div>Fetching court availability…</div>
+</div>
+<style>
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+
+<script>
+  // Date picker handler
+  (function() {
+    const picker = document.getElementById('date-picker');
+    if (picker) {
+      picker.addEventListener('change', function() {
+        const overlay = document.getElementById('loading-overlay');
+        overlay.style.display = 'flex';
+        window.location.href = '/?date=' + this.value;
+      });
+    }
+  })();
+
+  // Timestamp updater
+  (function() {
+    function updateTimestamp() {
+      const el = document.getElementById('updated-time');
+      if (!el) return;
+      const generated = new Date(el.dataset.time);
+      const diffMs = Date.now() - generated;
+      const mins = Math.floor(diffMs / 60000);
+      const hrs = Math.floor(diffMs / 3600000);
+      if (mins < 1) el.textContent = 'just now';
+      else if (mins < 60) el.textContent = `${mins} min${mins === 1 ? '' : 's'} ago`;
+      else if (hrs < 24) el.textContent = `${hrs} hr${hrs === 1 ? '' : 's'} ago`;
+      else el.textContent = Math.floor(hrs / 24) + ' days ago';
+    }
+    updateTimestamp();
+    setInterval(updateTimestamp, 30000);
+  })();
+
+  // Hover tooltip
+  (function() {
+    const tooltip = document.getElementById('court-tooltip');
+    let hideTimer;
+
+    function show(cell, e) {
+      clearTimeout(hideTimer);
+      const courts = JSON.parse(cell.dataset.courts);
+      const time = cell.dataset.time;
+      let html = `<div class="tt-time">${time}</div>`;
+      courts.forEach(c => {
+        html += `<a class="tt-court" href="${c.url}" target="_blank">${c.label}</a>`;
+      });
+      tooltip.innerHTML = html;
+      tooltip.classList.remove('pinned');
+      tooltip.style.display = 'block';
+      position(e);
+    }
+
+    function position(e) {
+      const tw = tooltip.offsetWidth || 180;
+      const th = tooltip.offsetHeight || 60;
+      let x = e.clientX + 14;
+      let y = e.clientY - 10;
+      if (x + tw > window.innerWidth - 8) x = e.clientX - tw - 14;
+      if (y + th > window.innerHeight - 8) y = window.innerHeight - th - 8;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    }
+
+    function scheduleHide() {
+      if (tooltip.classList.contains('pinned')) return;
+      hideTimer = setTimeout(() => {
+        tooltip.style.display = 'none';
+      }, 120);
+    }
+
+    function dismiss() {
+      clearTimeout(hideTimer);
+      tooltip.style.display = 'none';
+      tooltip.classList.remove('pinned');
+    }
+
+    document.querySelectorAll('.has-courts').forEach(cell => {
+      cell.addEventListener('mouseenter', e => { if (!tooltip.classList.contains('pinned')) show(cell, e); });
+      cell.addEventListener('mousemove', e => { if (!tooltip.classList.contains('pinned')) position(e); });
+      cell.addEventListener('mouseleave', e => { if (!tooltip.classList.contains('pinned')) scheduleHide(); });
+      cell.addEventListener('click', e => {
+        e.stopPropagation();
+        const courts = JSON.parse(cell.dataset.courts);
+        if (courts.length === 1) {
+          window.open(courts[0].url, '_blank');
+        } else {
+          clearTimeout(hideTimer);
+          show(cell, e);
+          tooltip.classList.add('pinned');
+        }
+      });
+    });
+
+    tooltip.addEventListener('mouseenter', () => {
+      clearTimeout(hideTimer);
+      tooltip.classList.add('pinned');
+    });
+    tooltip.addEventListener('mouseleave', scheduleHide);
+
+    document.addEventListener('click', e => {
+      if (tooltip.classList.contains('pinned') && !tooltip.contains(e.target)) dismiss();
+    });
+  })();
+</script>
+</body>
+</html>
