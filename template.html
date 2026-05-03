@@ -165,6 +165,7 @@
     h1 { font-size: 20px; }
     .avail-wrap { display: none; }
     .mobile-cards { display: block; }
+    .hint-grid { display: none; }
 
     .court-card {
       background: #fff; border: 1px solid #ddd; border-radius: 6px;
@@ -216,8 +217,8 @@
 
 <div class="summary-bar">
   <strong>{{ total_slots }}</strong> available hour{{ 's' if total_slots != 1 else '' }}
-  across {{ venue_count }} venues &nbsp;·&nbsp;
-  <strong>Hover any green cell to see available courts &amp; book</strong>
+  across {{ venue_count }} venues
+  <span class="hint-grid">&nbsp;·&nbsp; <strong>Hover any green cell to book</strong></span>
   {% if errors %}&nbsp;·&nbsp; <span style="color:#c00">{{ errors }} venue{{ 's' if errors != 1 else '' }} had errors</span>{% endif %}
 </div>
 
