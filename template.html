@@ -360,7 +360,7 @@
       const time = cell.dataset.time;
       let html = `<div class="tt-time">${time}</div>`;
       courts.forEach(c => {
-        html += `<a class="tt-court" href="${c.url}" target="_blank">${c.label}</a>`;
+        html += `<a class="tt-court" href="${c.url}">${c.label}</a>`;
       });
       tooltip.innerHTML = html;
       tooltip.classList.remove('pinned');
@@ -402,7 +402,7 @@
         e.stopPropagation();
         const courts = JSON.parse(cell.dataset.courts);
         if (courts.length === 1) {
-          window.open(courts[0].url, '_blank');
+          window.location.href = courts[0].url;
         } else {
           clearTimeout(hideTimer);
           show(cell, e);
@@ -413,7 +413,7 @@
         e.preventDefault();
         const courts = JSON.parse(cell.dataset.courts);
         if (courts.length === 1) {
-          window.open(courts[0].url, '_blank');
+          window.location.href = courts[0].url;
         } else {
           clearTimeout(hideTimer);
           show(cell, e);
