@@ -147,6 +147,20 @@
   }
   .tt-court:hover { color: #a8dda8; text-decoration: underline; }
 
+  /* ── Time-jump nav (desktop/tablet) ── */
+  .time-jump {
+    display: flex; align-items: center; gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md); font-size: 12px; color: #888;
+  }
+  .time-jump span { font-weight: 600; margin-right: 4px; }
+  .tj-btn {
+    padding: 4px 10px; border-radius: 12px; border: 1px solid #ddd;
+    background: #fff; font-size: 12px; font-weight: 600; cursor: pointer;
+    color: #444; transition: background 0.1s, color 0.1s;
+  }
+  .tj-btn:hover { background: #111; color: #fff; border-color: #111; }
+  @media (max-width: 767px) { .time-jump { display: none; } }
+
   /* Legend */
   .legend {
     display: flex; gap: var(--spacing-xl); margin-top: var(--spacing-2xl);
@@ -239,12 +253,22 @@
 <div class="summary-bar">
   <strong>{{ total_slots }}</strong> available hour{{ 's' if total_slots != 1 else '' }}
   across {{ venue_count }} venues
-  <span class="hint-grid">&nbsp;·&nbsp; <strong>Hover any green cell to book</strong></span>
+  <span class="hint-grid">&nbsp;·&nbsp; <strong>Click any green cell to book</strong></span>
   {% if errors %}&nbsp;·&nbsp; <span style="color:#c00">{{ errors }} venue{{ 's' if errors != 1 else '' }} had errors</span>{% endif %}
 </div>
 
+<!-- Desktop time-jump nav -->
+<div class="time-jump">
+  <span>Jump to:</span>
+  <button class="tj-btn" data-jump="07:00">Morning</button>
+  <button class="tj-btn" data-jump="12:00">Noon</button>
+  <button class="tj-btn" data-jump="17:00">Afternoon</button>
+  <button class="tj-btn" data-jump="19:00">Evening</button>
+  <button class="tj-btn" id="tj-now">Now</button>
+</div>
+
 <!-- Desktop availability grid -->
-<div class="avail-wrap">
+<div class="avail-wrap" id="avail-wrap">
   <table class="avail-grid">
     <thead>
       <tr>
@@ -322,7 +346,7 @@
 <div class="legend">
   <span class="legend-item">
     <span style="width:20px;height:20px;background:var(--color-avail);border-radius:3px;display:inline-block;"></span>
-    Available (hover to see courts &amp; book)
+    Available (click to book)
   </span>
   <span class="legend-item">
     <span style="width:20px;height:20px;background:var(--color-booked);border-radius:3px;border:1px solid #ddd;display:inline-block;"></span>
@@ -460,6 +484,54 @@
     document.addEventListener('click', e => {
       if (tooltip.classList.contains('pinned') && !tooltip.contains(e.target)) dismiss();
     });
+  })();
+
+  // Desktop jump-to-time
+  (function() {
+    const wrap = document.getElementById('avail-wrap');
+    const venueColW = 190; // matches CSS min-width
+
+    function slotLabelToMins(label) {
+      const m = label.trim().match(/^(\d+):(\d+)(am|pm)$/i);
+      if (!m) return null;
+      let h = parseInt(m[1]), min = parseInt(m[2]);
+      const pm = m[3].toLowerCase() === 'pm';
+      if (pm && h !== 12) h += 12;
+      if (!pm && h === 12) h = 0;
+      return h * 60 + min;
+    }
+
+    function jumpToSlot(targetMins) {
+      if (!wrap) return;
+      const headers = wrap.querySelectorAll('th.time-header');
+      let best = null, bestDiff = Infinity;
+      headers.forEach((th, i) => {
+        const label = th.querySelector('span')?.textContent || '';
+        const mins = slotLabelToMins(label);
+        if (mins === null) return;
+        const diff = Math.abs(mins - targetMins);
+        if (diff < bestDiff) { bestDiff = diff; best = i; }
+      });
+      if (best !== null) {
+        const cellW = 34;
+        wrap.scrollLeft = venueColW + best * cellW - 8;
+      }
+    }
+
+    document.querySelectorAll('.tj-btn[data-jump]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const [h, m] = btn.dataset.jump.split(':').map(Number);
+        jumpToSlot(h * 60 + m);
+      });
+    });
+
+    const nowBtn = document.getElementById('tj-now');
+    if (nowBtn) {
+      nowBtn.addEventListener('click', () => {
+        const now = new Date();
+        jumpToSlot(now.getHours() * 60 + now.getMinutes());
+      });
+    }
   })();
 
   // Mobile time-period filter
