@@ -157,6 +157,27 @@
   }
   .legend-item { display: flex; align-items: center; gap: var(--spacing-sm); }
 
+  /* ── Mobile time-filter chips ── */
+  .mobile-filter { display: none; }
+
+  @media (max-width: 767px) {
+    .mobile-filter {
+      display: flex; gap: 6px; margin-bottom: var(--spacing-lg);
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      padding-bottom: 2px;
+    }
+    .mf-btn {
+      flex-shrink: 0;
+      padding: 7px 14px; border-radius: 20px;
+      border: 1px solid #ddd; background: #fff;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      color: #444; white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mf-btn.active { background: var(--color-avail); color: #fff; border-color: var(--color-avail); }
+    .mf-btn span { font-weight: 400; opacity: 0.75; font-size: 11px; }
+  }
+
   /* ── Mobile card view ── */
   .mobile-cards { display: none; }
 
@@ -252,6 +273,14 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
+
+<!-- Mobile time-period filter chips -->
+<div class="mobile-filter" id="mobile-filter">
+  <button class="mf-btn active" data-filter="all">All</button>
+  <button class="mf-btn" data-filter="morning">Morning <span>7am–12pm</span></button>
+  <button class="mf-btn" data-filter="afternoon">Afternoon <span>12–5pm</span></button>
+  <button class="mf-btn" data-filter="evening">Evening <span>5–10pm</span></button>
 </div>
 
 <!-- Mobile card view (one card per venue) -->
@@ -430,6 +459,62 @@
 
     document.addEventListener('click', e => {
       if (tooltip.classList.contains('pinned') && !tooltip.contains(e.target)) dismiss();
+    });
+  })();
+
+  // Mobile time-period filter
+  (function() {
+    const btns = document.querySelectorAll('.mf-btn');
+    if (!btns.length) return;
+
+    function parseMins(timeStr) {
+      const m = timeStr.trim().match(/^(\d+):(\d+)(am|pm)$/i);
+      if (!m) return 0;
+      let h = parseInt(m[1]), min = parseInt(m[2]);
+      const pm = m[3].toLowerCase() === 'pm';
+      if (pm && h !== 12) h += 12;
+      if (!pm && h === 12) h = 0;
+      return h * 60 + min;
+    }
+
+    function applyFilter(filter) {
+      document.querySelectorAll('.court-card').forEach(card => {
+        const items = card.querySelectorAll('.slots-list li');
+        let visible = 0;
+        items.forEach(li => {
+          const link = li.querySelector('.slot-avail');
+          if (!link) { li.style.display = ''; return; }
+          const mins = parseMins(link.querySelector('.slot-avail-time')?.textContent || '');
+          const show = filter === 'all'
+            || (filter === 'morning'   && mins < 720)
+            || (filter === 'afternoon' && mins >= 720 && mins < 1020)
+            || (filter === 'evening'   && mins >= 1020);
+          li.style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+
+        // Show/hide per-card empty message
+        let msg = card.querySelector('.mf-empty');
+        if (visible === 0 && items.length > 0) {
+          if (!msg) {
+            msg = document.createElement('li');
+            msg.className = 'mf-empty slots-empty';
+            card.querySelector('.slots-list')?.appendChild(msg);
+          }
+          msg.textContent = 'No slots in this time period';
+          msg.style.display = '';
+        } else if (msg) {
+          msg.style.display = 'none';
+        }
+      });
+    }
+
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        btns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilter(btn.dataset.filter);
+      });
     });
   })();
 </script>
