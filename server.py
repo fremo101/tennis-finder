@@ -2,6 +2,7 @@
 """Flask web server for interactive court availability browsing."""
 
 import json
+import os
 import time
 import shutil
 import sys
@@ -101,5 +102,5 @@ def index():
 
 
 if __name__ == "__main__":
-    # Use port 5001 to avoid conflicts with AirPlay Receiver (which uses 5000)
-    app.run(debug=False, threaded=True, port=5001)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(debug=False, threaded=True, port=port)

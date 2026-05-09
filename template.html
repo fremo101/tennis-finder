@@ -327,12 +327,14 @@
       {% if has_any.v %}
         {% for col in time_cols %}
           {% if col.slot in venue.slots %}
-            {% for court in venue.slots[col.slot] %}
-            <li><a class="slot-avail" href="{{ court.url }}" target="_blank">
+            {% set courts = venue.slots[col.slot] %}
+            <li><a class="slot-avail slot-mobile" href="{{ courts[0].url if courts|length == 1 else '#' }}"
+              data-courts="{{ courts | tojson | forceescape }}"
+              data-time="{{ col.label }}"
+              {% if courts|length == 1 %}target="_blank"{% endif %}>
               <span class="slot-avail-time">{{ col.label }}</span>
-              <span class="slot-avail-court">{{ court.label }}</span>
+              <span class="slot-avail-court">{% if courts|length > 1 %}{{ courts|length }} courts{% else %}{{ courts[0].label }}{% endif %}</span>
             </a></li>
-            {% endfor %}
           {% endif %}
         {% endfor %}
       {% else %}
@@ -474,6 +476,20 @@
           tooltip.classList.add('pinned');
         }
       }, { passive: false });
+    });
+
+    // Mobile slot tap: single court navigates directly, multi-court shows picker
+    document.querySelectorAll('.slot-mobile').forEach(el => {
+      el.addEventListener('click', e => {
+        const courts = JSON.parse(el.dataset.courts);
+        if (courts.length > 1) {
+          e.preventDefault();
+          e.stopPropagation();
+          clearTimeout(hideTimer);
+          show(el, e);
+          tooltip.classList.add('pinned');
+        }
+      });
     });
 
     tooltip.addEventListener('mouseenter', () => {
